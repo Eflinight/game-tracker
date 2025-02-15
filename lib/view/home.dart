@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:game_tracker/data/game_data.dart';
-import 'package:game_tracker/providers.dart';
+import 'package:game_tracker/data/game_list_provider.dart';
 import 'package:game_tracker/widget/game_list.dart';
 
 class MyHomePage extends StatefulWidget {

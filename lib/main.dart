@@ -1,14 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:game_tracker/view/home.dart';
-import 'package:game_tracker/providers.dart';
+import 'package:game_tracker/data/game_list_provider.dart';
 import 'package:game_tracker/utils/network.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:provider/provider.dart';
 
 void main() async {
   initializeDateFormatting("en");
   await updateGameList();
-  await setupAllProviders();
-  runApp(const MyApp());
+  runApp(
+    ChangeNotifierProvider(
+      create: (context) => GameList.fromJson(),
+      child: const MyApp()
+    )
+  );
 }
 
 class MyApp extends StatelessWidget {
