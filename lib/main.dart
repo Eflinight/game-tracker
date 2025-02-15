@@ -10,7 +10,7 @@ void main() async {
   await updateGameList();
   runApp(
     ChangeNotifierProvider(
-      create: (context) => GameList.fromJson(),
+      create: (context) => GameListData.fromJson(),
       child: const MyApp()
     )
   );

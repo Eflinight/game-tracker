@@ -4,13 +4,13 @@ import 'package:game_tracker/data/game_data.dart';
 import 'package:game_tracker/utils/localio.dart';
 import 'package:game_tracker/utils/network.dart';
 
-class GameList extends ChangeNotifier {
+class GameListData extends ChangeNotifier {
   List<Game> _buffer = []; // A strictly internal copy of the game list 
   List<Game> _games = [];
 
   UnmodifiableListView<Game> get games => UnmodifiableListView(_games);
   
-  GameList.fromJson() {
+  GameListData.fromJson() {
     load();
   }
 
@@ -52,6 +52,8 @@ class GameList extends ChangeNotifier {
   }
 
   void filter(String filter) {
+    // Restore from to re-update backward from filter if needed
+    restore();
     _games.retainWhere((game) => game.name.toLowerCase().contains(filter.toLowerCase()));
     notifyListeners();
   }
@@ -160,7 +162,7 @@ class GameList extends ChangeNotifier {
     }
 
     // Copy in buffer from the beginning
-    _buffer = _games;
+    buffer();
 
     notifyListeners();
   }
