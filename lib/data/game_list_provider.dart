@@ -51,6 +51,13 @@ class GameListData extends ChangeNotifier {
     _applyFilter();
   }
 
+  void update(Game game) {
+    restore();
+    _games[_games.indexWhere((g) => g.guid == game.guid)] = game;
+    buffer();
+    _applyFilter();
+  }
+
   void sort() {
     restore();
     _games.sort((Game g1, Game g2) {
