@@ -1,15 +1,18 @@
 import 'dart:collection';
+import 'dart:ffi';
 import 'package:flutter/material.dart';
 import 'package:game_tracker/data/game_data.dart';
 import 'package:game_tracker/utils/localio.dart';
 import 'package:game_tracker/utils/network.dart';
 
 class GameListData extends ChangeNotifier {
-  List<Game> _buffer = []; // A strictly internal copy of the game list 
-  List<Game> _games  = []; // The actual readable game list
-  String     _filter = ""; // The current filter applied to the list
-
-  UnmodifiableListView<Game> get games => UnmodifiableListView(_games);
+  List<Game> _buffer         = []; // A strictly internal copy of the game list 
+  List<Game> _games          = []; // The actual readable game list
+  String     _filter         = "";       // The current filter applied to the list
+  double     _loadingPercent = 0.0;      // Loading percentage
+ 
+  UnmodifiableListView<Game> get games  => UnmodifiableListView(_games);
+  double                     get loading => _loadingPercent;
   
   GameListData.fromJson() {
     load();
@@ -117,8 +120,10 @@ class GameListData extends ChangeNotifier {
   Future<void> load() async {
     bool       gameDataChanged = false;
     dynamic    gameListData    = await getGameListJson();
+    int        index           = 0;
 
     for ( Map<String, dynamic> game in gameListData['games'] ) {
+      index++;
       Game newGame = Game();
 
       // Game GUID
@@ -177,15 +182,16 @@ class GameListData extends ChangeNotifier {
       await newGame.refresh();
       
       _games.add(newGame);
+      sort();
+
+      // Update the loading percentage
+      _loadingPercent = index/gameListData['games'].length;
+
+      notifyListeners();
     }
 
     if ( gameDataChanged ) {
       saveNewGameListJson(gameListData);
     }
-
-    // Copy in buffer from the beginning
-    buffer();
-
-    notifyListeners();
   }
 }
