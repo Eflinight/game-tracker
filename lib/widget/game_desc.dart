@@ -41,11 +41,6 @@ class _GameDescState extends State<GameDesc> with SingleTickerProviderStateMixin
     ));
   }
 
-  
-  void _saveNewSetting() {
-         
-  }
-
   void _startSlideOut() {
     if (_controller.status == AnimationStatus.completed) {
       _controller.reverse(); // Reset for replay
@@ -60,16 +55,6 @@ class _GameDescState extends State<GameDesc> with SingleTickerProviderStateMixin
     super.dispose();
   }
   
-  Widget createHeaderPane() {
-    return Stack(
-      alignment: AlignmentDirectional.bottomEnd,
-      children: [
-        createHeaderView(),
-        createHeaderButtons()
-      ]
-    );
-  }
-
   Future<void> _selectDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
       context: context,
@@ -83,6 +68,22 @@ class _GameDescState extends State<GameDesc> with SingleTickerProviderStateMixin
         _tempChangeGame.releaseDate = picked;
       });
     }
+  }
+
+  Widget createHeaderPane() {
+    return Stack(
+      children: [
+        createHeaderView(),
+        Align(
+          alignment: Alignment.topRight,
+          child: createGeneralHeaderButtons()
+        ),
+        Align(
+          alignment: Alignment.bottomRight,
+          child: createSpecificHeaderButtons()
+        )
+      ]
+    );
   }
 
   Widget createSettingsPane() {
@@ -281,23 +282,12 @@ class _GameDescState extends State<GameDesc> with SingleTickerProviderStateMixin
     );
   }
 
-  Widget createHeaderButtons() {
+  Widget createSpecificHeaderButtons() {
     return Padding(
       padding: const EdgeInsets.all(8.0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
-          IconButton(
-            onPressed: () => _startSlideOut(),
-            icon: const Icon(Icons.edit),
-            style: const ButtonStyle(
-              backgroundColor: MaterialStatePropertyAll<Color>(Colors.white),
-              shadowColor: MaterialStatePropertyAll<Color>(Colors.black),
-              elevation: MaterialStatePropertyAll<double>(7.0)
-            ),
-            tooltip: "Edit",
-          ),
-          SizedBox.fromSize(size: const Size(15.0, 0.0)),
           if (widget.game.playing)
             ...[
               IconButton(
@@ -333,6 +323,38 @@ class _GameDescState extends State<GameDesc> with SingleTickerProviderStateMixin
       ),
     );
   } 
+
+  Widget createGeneralHeaderButtons() {
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          IconButton(
+            onPressed: () => _startSlideOut(),
+            icon: const Icon(Icons.edit),
+            style: const ButtonStyle(
+              backgroundColor: MaterialStatePropertyAll<Color>(Colors.white),
+              shadowColor: MaterialStatePropertyAll<Color>(Colors.black),
+              elevation: MaterialStatePropertyAll<double>(7.0)
+            ),
+            tooltip: "Edit",
+          ),
+          SizedBox.fromSize(size: const Size(15.0, 0.0)),
+          IconButton(
+            onPressed: () => Provider.of<GameListData>(context, listen: false).remove(widget.game.guid),
+            icon: const Icon(Icons.delete_forever),
+            style: const ButtonStyle(
+              backgroundColor: MaterialStatePropertyAll<Color>(Colors.white),
+              shadowColor: MaterialStatePropertyAll<Color>(Colors.black),
+              elevation: MaterialStatePropertyAll<double>(7.0)
+            ),
+            tooltip: "Delete Game",
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
