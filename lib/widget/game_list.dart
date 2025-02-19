@@ -73,7 +73,7 @@ class _GameListState extends State<GameList> {
         iconSize: MaterialStatePropertyAll<double>(40.0),
         
       ),
-      onPressed: () => Provider.of<GameListData>(context).sort(),
+      onPressed: () => Provider.of<GameListData>(context, listen: false).sort(),
       tooltip: "Sort",
     );
   }
@@ -89,7 +89,7 @@ class _GameListState extends State<GameList> {
       onPressed: () {
         Game game = Game();
         game.loadHeader();
-        Provider.of<GameListData>(context).add(game);
+        Provider.of<GameListData>(context, listen: false).add(game);
         addNewGameData(game);
       },
       tooltip: "Add Game",

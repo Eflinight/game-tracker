@@ -36,6 +36,7 @@ class GameListData extends ChangeNotifier {
   void add(Game game) {
     restore();
     _games.add(game);
+    addNewGameData(game);
     buffer();
     _applyFilter();
   }
@@ -43,6 +44,7 @@ class GameListData extends ChangeNotifier {
   void remove(int guid) {
     restore();
     _games.removeWhere((game) => game.guid == guid);
+    removeGameData(guid);
     buffer();
     _applyFilter();
   }
@@ -57,6 +59,7 @@ class GameListData extends ChangeNotifier {
   void update(Game game) {
     restore();
     _games[_games.indexWhere((g) => g.guid == game.guid)] = game;
+    saveGameData(game);
     buffer();
     _applyFilter();
   }

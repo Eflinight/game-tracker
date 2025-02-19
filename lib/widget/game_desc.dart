@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:game_tracker/data/game_data.dart';
+import 'package:game_tracker/data/game_list_provider.dart';
 import 'package:game_tracker/utils/localio.dart';
+import 'package:game_tracker/widget/game_list.dart';
 import 'package:game_tracker/widget/star_rating.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:provider/provider.dart';
 
 class GameDesc extends StatefulWidget {
   final Game game; // Game data
@@ -38,16 +41,9 @@ class _GameDescState extends State<GameDesc> with SingleTickerProviderStateMixin
     ));
   }
 
-  Future<void> _saveNewSetting() async {
-    int previousGameGuid    = widget.game.guid; 
-    widget.game.name        = _tempChangeGame.name;
-    widget.game.hype        = _tempChangeGame.hype;
-    widget.game.releaseDate = _tempChangeGame.releaseDate;
-    widget.game.playing     = _tempChangeGame.playing;
-    await widget.game.refresh();
-    setState(() {
-      ( previousGameGuid == 0 ) ? addNewGameData(widget.game) : saveGameData(widget.game);     
-    });
+  
+  void _saveNewSetting() {
+         
   }
 
   void _startSlideOut() {
@@ -203,8 +199,8 @@ class _GameDescState extends State<GameDesc> with SingleTickerProviderStateMixin
           ),
           SizedBox.fromSize(size: const Size(10.0, 0.0)),
           IconButton(
-            onPressed: () async {
-              await _saveNewSetting();
+            onPressed: () {
+              Provider.of<GameListData>(context, listen: false).update(_tempChangeGame);
               _startSlideOut();
             },
             icon: const Icon(Icons.check_circle),
@@ -308,7 +304,7 @@ class _GameDescState extends State<GameDesc> with SingleTickerProviderStateMixin
                 onPressed: () {
                   _tempChangeGame.playing = false;
                   _tempChangeGame.hype = 1;
-                  _saveNewSetting();
+                  Provider.of<GameListData>(context, listen: false).update(_tempChangeGame);
                 },
                 icon: const Icon(Icons.workspace_premium),
                 style: const ButtonStyle(
@@ -323,7 +319,7 @@ class _GameDescState extends State<GameDesc> with SingleTickerProviderStateMixin
           IconButton(
             onPressed: () {
               _tempChangeGame.playing = !_tempChangeGame.playing;
-              _saveNewSetting();
+              Provider.of<GameListData>(context, listen: false).update(_tempChangeGame);
             },
             icon: Icon(widget.game.playing ? Icons.videogame_asset_off : Icons.videogame_asset),
             style: const ButtonStyle(
