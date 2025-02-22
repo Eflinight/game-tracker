@@ -49,12 +49,7 @@ class _GameListState extends State<GameList> {
 
   Widget createSearchBar() {
     return SearchBar(
-      onChanged: (String newFilter) {
-        setState(() {
-          filter = newFilter;
-          Provider.of<GameListData>(context, listen: false).filter(filter);
-        });
-      },
+      onChanged: (String newFilter) => setState(() => filter = newFilter),
       backgroundColor: MaterialStatePropertyAll<Color>(Colors.blueGrey.shade900),
       surfaceTintColor: const MaterialStatePropertyAll<Color>(Colors.transparent),
       overlayColor: const MaterialStatePropertyAll<Color>(Colors.transparent),
@@ -115,11 +110,13 @@ class _GameListState extends State<GameList> {
   Widget createGameListView() {
     return Consumer<GameListData>(
       builder: (context, data, child) {
+        List<Game> filteredGames = List<Game>.from(data.games);
+        filteredGames.retainWhere((game) => game.name.toLowerCase().contains(filter.toLowerCase()));
         return ListView.builder(
           controller: _scrollController,
-          itemCount: data.games.length,
+          itemCount: filteredGames.length,
           itemBuilder: (context, index) {
-            Game game = data.games[index];
+            Game game = filteredGames[index];
             return GameDesc(game: game);
           }
         );
