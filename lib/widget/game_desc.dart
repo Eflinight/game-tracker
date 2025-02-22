@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:game_tracker/data/game_data.dart';
+import 'package:game_tracker/data/game_list_provider.dart';
 import 'package:game_tracker/utils/localio.dart';
+import 'package:game_tracker/widget/game_list.dart';
 import 'package:game_tracker/widget/star_rating.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:provider/provider.dart';
 
 class GameDesc extends StatefulWidget {
   final Game game; // Game data
@@ -38,18 +41,6 @@ class _GameDescState extends State<GameDesc> with SingleTickerProviderStateMixin
     ));
   }
 
-  Future<void> _saveNewSetting() async {
-    int previousGameGuid    = widget.game.guid; 
-    widget.game.name        = _tempChangeGame.name;
-    widget.game.hype        = _tempChangeGame.hype;
-    widget.game.releaseDate = _tempChangeGame.releaseDate;
-    widget.game.playing     = _tempChangeGame.playing;
-    await widget.game.refresh();
-    setState(() {
-      ( previousGameGuid == 0 ) ? addNewGameData(widget.game) : saveGameData(widget.game);     
-    });
-  }
-
   void _startSlideOut() {
     if (_controller.status == AnimationStatus.completed) {
       _controller.reverse(); // Reset for replay
@@ -64,16 +55,6 @@ class _GameDescState extends State<GameDesc> with SingleTickerProviderStateMixin
     super.dispose();
   }
   
-  Widget createHeaderPane() {
-    return Stack(
-      alignment: AlignmentDirectional.bottomEnd,
-      children: [
-        createHeaderView(),
-        createHeaderButtons()
-      ]
-    );
-  }
-
   Future<void> _selectDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
       context: context,
@@ -83,10 +64,24 @@ class _GameDescState extends State<GameDesc> with SingleTickerProviderStateMixin
     );
 
     if (picked != null && picked != widget.game.releaseDate) {
-      setState(() {
-        _tempChangeGame.releaseDate = picked;
-      });
+      _tempChangeGame.releaseDate = picked;
     }
+  }
+
+  Widget createHeaderPane() {
+    return Stack(
+      children: [
+        createHeaderView(),
+        Align(
+          alignment: Alignment.topRight,
+          child: createGeneralHeaderButtons()
+        ),
+        Align(
+          alignment: Alignment.bottomRight,
+          child: createSpecificHeaderButtons()
+        )
+      ]
+    );
   }
 
   Widget createSettingsPane() {
@@ -204,7 +199,7 @@ class _GameDescState extends State<GameDesc> with SingleTickerProviderStateMixin
           SizedBox.fromSize(size: const Size(10.0, 0.0)),
           IconButton(
             onPressed: () async {
-              await _saveNewSetting();
+              await Provider.of<GameListData>(context, listen: false).update(_tempChangeGame);
               _startSlideOut();
             },
             icon: const Icon(Icons.check_circle),
@@ -285,7 +280,49 @@ class _GameDescState extends State<GameDesc> with SingleTickerProviderStateMixin
     );
   }
 
-  Widget createHeaderButtons() {
+  Widget createSpecificHeaderButtons() {
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          if (widget.game.playing)
+            ...[
+              IconButton(
+                onPressed: () {
+                  _tempChangeGame.playing = false;
+                  _tempChangeGame.hype = 1;
+                  Provider.of<GameListData>(context, listen: false).update(_tempChangeGame);
+                },
+                icon: const Icon(Icons.workspace_premium),
+                style: const ButtonStyle(
+                  backgroundColor: MaterialStatePropertyAll<Color>(Colors.white),
+                  shadowColor: MaterialStatePropertyAll<Color>(Colors.black),
+                  elevation: MaterialStatePropertyAll<double>(7.0)
+                ),
+                tooltip: "To 100%",
+              ),
+              SizedBox.fromSize(size: const Size(15.0, 0.0))
+            ],
+          IconButton(
+            onPressed: () {
+              _tempChangeGame.playing = !_tempChangeGame.playing;
+              Provider.of<GameListData>(context, listen: false).update(_tempChangeGame);
+            },
+            icon: Icon(widget.game.playing ? Icons.videogame_asset_off : Icons.videogame_asset),
+            style: const ButtonStyle(
+              backgroundColor: MaterialStatePropertyAll<Color>(Colors.white),
+              shadowColor: MaterialStatePropertyAll<Color>(Colors.black),
+              elevation: MaterialStatePropertyAll<double>(7.0)
+            ),
+            tooltip: widget.game.playing ? "Stop Playing" : "Start Playing",
+          ),
+        ],
+      ),
+    );
+  } 
+
+  Widget createGeneralHeaderButtons() {
     return Padding(
       padding: const EdgeInsets.all(8.0),
       child: Row(
@@ -302,41 +339,20 @@ class _GameDescState extends State<GameDesc> with SingleTickerProviderStateMixin
             tooltip: "Edit",
           ),
           SizedBox.fromSize(size: const Size(15.0, 0.0)),
-          if (widget.game.playing)
-            ...[
-              IconButton(
-                onPressed: () {
-                  _tempChangeGame.playing = false;
-                  _tempChangeGame.hype = 1;
-                  _saveNewSetting();
-                },
-                icon: const Icon(Icons.workspace_premium),
-                style: const ButtonStyle(
-                  backgroundColor: MaterialStatePropertyAll<Color>(Colors.white),
-                  shadowColor: MaterialStatePropertyAll<Color>(Colors.black),
-                  elevation: MaterialStatePropertyAll<double>(7.0)
-                ),
-                tooltip: "To 100%",
-              ),
-              SizedBox.fromSize(size: const Size(15.0, 0.0))
-            ],
           IconButton(
-            onPressed: () {
-              _tempChangeGame.playing = !_tempChangeGame.playing;
-              _saveNewSetting();
-            },
-            icon: Icon(widget.game.playing ? Icons.videogame_asset_off : Icons.videogame_asset),
+            onPressed: () => Provider.of<GameListData>(context, listen: false).remove(widget.game.guid),
+            icon: const Icon(Icons.delete_forever),
             style: const ButtonStyle(
               backgroundColor: MaterialStatePropertyAll<Color>(Colors.white),
               shadowColor: MaterialStatePropertyAll<Color>(Colors.black),
               elevation: MaterialStatePropertyAll<double>(7.0)
             ),
-            tooltip: widget.game.playing ? "Stop Playing" : "Start Playing",
+            tooltip: "Delete Game",
           ),
         ],
       ),
     );
-  } 
+  }
 
   @override
   Widget build(BuildContext context) {

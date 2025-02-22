@@ -111,3 +111,15 @@ void removeGameData(int gameGuid) async {
   // Save the new json
   saveNewGameListJson(gameList);
 }
+
+Future<int> getNewGuid() async {
+  // Get the the game list
+  dynamic gameList = await getGameListJson();
+
+  ++gameList['guididx'];
+
+  // Save the new json
+  saveNewGameListJson(gameList); 
+
+  return gameList['guididx'];
+}
