@@ -5,9 +5,7 @@ import 'package:game_tracker/utils/localio.dart';
 import 'package:game_tracker/utils/network.dart';
 
 class GameListData extends ChangeNotifier {
-  List<Game> _buffer         = [];  // A strictly internal copy of the game list 
-  List<Game> _games          = [];  // The actual readable game list
-  String     _filter         = "";  // The current filter applied to the list
+  final List<Game> _games    = [];  // Game list
   double     _loadingPercent = 0.0; // Loading percentage
  
   UnmodifiableListView<Game> get games  => UnmodifiableListView(_games);
@@ -17,55 +15,28 @@ class GameListData extends ChangeNotifier {
     load();
   }
 
-  void _applyFilter() {
-    _games.retainWhere((game) => game.name.toLowerCase().contains(_filter.toLowerCase()));
-    notifyListeners();
-  }
-
-  void buffer() {
-    _buffer = _games;
-  }
-
-  void restore() {
-    _games = _buffer;
-  }
-
-
   Future<void> add(Game game) async {
     game.guid = await getNewGuid();
-    restore();
     _games.add(game);
     addNewGameData(game);
-    buffer();
-    _applyFilter();
   }
 
   void remove(int guid) {
-    restore();
     _games.removeWhere((game) => game.guid == guid);
     removeGameData(guid);
-    buffer();
-    _applyFilter();
   }
 
   void removeAll() {
-    restore();
     _games.clear();
-    buffer();
-    _applyFilter();
   }
 
   Future<void> update(Game game) async {
     await game.refresh();
-    restore();
     _games[_games.indexWhere((g) => g.guid == game.guid)] = game;
     saveGameData(game);
-    buffer();
-    _applyFilter();
   }
 
   void sort() {
-    restore();
     _games.sort((Game g1, Game g2) {
       if ( g1.playing && !g2.playing ) return -1;
       if ( !g1.playing && g2.playing ) return 1;
@@ -74,17 +45,7 @@ class GameListData extends ChangeNotifier {
       if ( g1.releaseDate.compareTo(g2.releaseDate) != 0 ) return g1.releaseDate.compareTo(g2.releaseDate);
       return g1.name.compareTo(g2.name);
     });
-    buffer();
-    _applyFilter();
   }
-
-  void filter(String filter) {
-    // Restore from to re-update backward from filter if needed
-    restore();
-    _filter = filter;
-    _applyFilter();
-  }
-
 
   Future<void> save() async {
     // Get the old json
