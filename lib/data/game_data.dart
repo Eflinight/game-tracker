@@ -20,7 +20,7 @@ class Game {
     hype        = 1,
     playing     = false;
 
-  Game.withData( int? newGuid, String? newName, int? newAppId, DateTime? newReleaseDate, int? newHype, bool? newPlaying, Image? newHeader ) : 
+  Game.withData( [ int? newGuid, String? newName, int? newAppId, DateTime? newReleaseDate, int? newHype, bool? newPlaying, Image? newHeader ] ) : 
     assert( newHype == null || ( 1 <= newHype && newHype <= 5 ) ),
     guid        = newGuid        ?? 0,
     name        = newName        ?? '',

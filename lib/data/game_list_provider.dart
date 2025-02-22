@@ -1,15 +1,14 @@
 import 'dart:collection';
-import 'dart:ffi';
 import 'package:flutter/material.dart';
 import 'package:game_tracker/data/game_data.dart';
 import 'package:game_tracker/utils/localio.dart';
 import 'package:game_tracker/utils/network.dart';
 
 class GameListData extends ChangeNotifier {
-  List<Game> _buffer         = []; // A strictly internal copy of the game list 
-  List<Game> _games          = []; // The actual readable game list
-  String     _filter         = "";       // The current filter applied to the list
-  double     _loadingPercent = 0.0;      // Loading percentage
+  List<Game> _buffer         = [];  // A strictly internal copy of the game list 
+  List<Game> _games          = [];  // The actual readable game list
+  String     _filter         = "";  // The current filter applied to the list
+  double     _loadingPercent = 0.0; // Loading percentage
  
   UnmodifiableListView<Game> get games  => UnmodifiableListView(_games);
   double                     get loading => _loadingPercent;
@@ -29,11 +28,11 @@ class GameListData extends ChangeNotifier {
 
   void restore() {
     _games = _buffer;
-    _applyFilter();
   }
 
 
-  void add(Game game) {
+  Future<void> add(Game game) async {
+    game.guid = await getNewGuid();
     restore();
     _games.add(game);
     addNewGameData(game);
@@ -56,7 +55,8 @@ class GameListData extends ChangeNotifier {
     _applyFilter();
   }
 
-  void update(Game game) {
+  Future<void> update(Game game) async {
+    await game.refresh();
     restore();
     _games[_games.indexWhere((g) => g.guid == game.guid)] = game;
     saveGameData(game);

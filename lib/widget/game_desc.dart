@@ -64,9 +64,7 @@ class _GameDescState extends State<GameDesc> with SingleTickerProviderStateMixin
     );
 
     if (picked != null && picked != widget.game.releaseDate) {
-      setState(() {
-        _tempChangeGame.releaseDate = picked;
-      });
+      _tempChangeGame.releaseDate = picked;
     }
   }
 
@@ -200,8 +198,8 @@ class _GameDescState extends State<GameDesc> with SingleTickerProviderStateMixin
           ),
           SizedBox.fromSize(size: const Size(10.0, 0.0)),
           IconButton(
-            onPressed: () {
-              Provider.of<GameListData>(context, listen: false).update(_tempChangeGame);
+            onPressed: () async {
+              await Provider.of<GameListData>(context, listen: false).update(_tempChangeGame);
               _startSlideOut();
             },
             icon: const Icon(Icons.check_circle),
