@@ -49,6 +49,7 @@ class GameListData extends ChangeNotifier {
       if ( g1.releaseDate.compareTo(g2.releaseDate) != 0 ) return g1.releaseDate.compareTo(g2.releaseDate);
       return g1.name.compareTo(g2.name);
     });
+    notifyListeners();
   }
 
   Future<void> save() async {
