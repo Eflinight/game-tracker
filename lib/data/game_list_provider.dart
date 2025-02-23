@@ -19,21 +19,25 @@ class GameListData extends ChangeNotifier {
     game.guid = await getNewGuid();
     _games.add(game);
     addNewGameData(game);
+    notifyListeners();
   }
 
   void remove(int guid) {
     _games.removeWhere((game) => game.guid == guid);
     removeGameData(guid);
+    notifyListeners();
   }
 
   void removeAll() {
     _games.clear();
+    notifyListeners();
   }
 
   Future<void> update(Game game) async {
     await game.refresh();
     _games[_games.indexWhere((g) => g.guid == game.guid)] = game;
     saveGameData(game);
+    notifyListeners();
   }
 
   void sort() {
