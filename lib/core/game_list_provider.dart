@@ -1,6 +1,6 @@
 import 'dart:collection';
 import 'package:flutter/material.dart';
-import 'package:game_tracker/data/game_data.dart';
+import 'package:game_tracker/core/game_data.dart';
 import 'package:game_tracker/utils/localio.dart';
 import 'package:game_tracker/utils/network.dart';
 

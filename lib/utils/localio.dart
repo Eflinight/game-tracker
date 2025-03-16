@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
-import 'package:game_tracker/data/game_data.dart';
+import 'package:game_tracker/core/game_data.dart';
 
 Future<dynamic> getGameListJson() async {
   final String appDataDir  = (await getApplicationSupportDirectory()).path;

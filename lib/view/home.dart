@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:game_tracker/data/game_list_provider.dart';
+import 'package:game_tracker/core/game_list_provider.dart';
 import 'package:game_tracker/widget/game_list.dart';
 import 'package:provider/provider.dart';
 
