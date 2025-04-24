@@ -93,3 +93,37 @@ Future<DateTime?> fetchReleaseDateFromSteamDB(int appid) async {
     return null;
   }
 }
+
+Future<int> fetchSaleFromSteamDB(int appid) async {
+  final String url = 'https://store.steampowered.com/api/appdetails?appids=$appid';
+
+  try {
+    final Response response = await get(Uri.parse(url));
+
+
+    if (response.statusCode == 200) {
+      final dynamic appData = jsonDecode(response.body)[appid.toString()];
+
+      if (appData['success']) {
+        final dynamic saleStringSubs = appData['data']['package_groups'][0]['subs'];
+        for (dynamic sub in saleStringSubs) {
+          print(sub['is_free_license']);
+          if (!sub['is_free_license']) {
+            final String saleString = sub['percent_savings_text'].trim();
+            return saleString.isEmpty ? 0 : int.parse(saleString.split('%')[0]);
+          }
+        }
+        return 0;
+      } 
+      else {
+        return 0;
+      }
+    } 
+    else {
+      return 0;
+    }
+  } 
+  catch (e) {
+    return 0;
+  }
+}

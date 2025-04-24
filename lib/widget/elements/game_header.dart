@@ -37,6 +37,19 @@ class GameHeaderPane extends StatelessWidget {
                     ),
                   ),
                 ),
+                if(!game.playing && game.sale != 0)
+                  SizedBox(
+                    width: MediaQuery.of(context).size.width * 0.1,
+                    child: Text(
+                      "${game.sale.toString()}%",
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 24,
+                        color: Colors.red,
+                        fontWeight: FontWeight.bold
+                      ),
+                    ),
+                  ),
                 Expanded(child: Container()),
                 if (game.playing)
                   Icon(
