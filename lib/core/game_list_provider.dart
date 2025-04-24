@@ -42,10 +42,12 @@ class GameListData extends ChangeNotifier {
 
   void sort() {
     _games.sort((Game g1, Game g2) {
+      int g1Score = g1.hype * 25 - g1.sale;
+      int g2Score = g2.hype * 25 - g2.sale;
       if ( g1.playing && !g2.playing ) return -1;
       if ( !g1.playing && g2.playing ) return 1;
-      if ( g1.hype > g2.hype ) return -1;
-      if ( g1.hype < g2.hype ) return 1;
+      if ( g1Score > g2Score ) return -1;
+      if ( g1Score < g2Score ) return 1;
       if ( g1.releaseDate.compareTo(g2.releaseDate) != 0 ) return g1.releaseDate.compareTo(g2.releaseDate);
       return g1.name.compareTo(g2.name);
     });
@@ -140,6 +142,9 @@ class GameListData extends ChangeNotifier {
         gameDataChanged = true;
       }
       newGame.playing = game['playing'];
+
+      // Game sale
+      newGame.sale = await fetchSaleFromSteamDB(newGame.appId);
 
       // Game header
       newGame.loadHeader();

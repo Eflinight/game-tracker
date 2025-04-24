@@ -10,6 +10,7 @@ class Game {
   DateTime releaseDate = DateTime.now();
   int      hype        = 1;
   bool     playing     = false; 
+  int      sale        = 0;
   Image?   header; 
 
   Game() :
@@ -20,7 +21,7 @@ class Game {
     hype        = 1,
     playing     = false;
 
-  Game.withData( [ int? newGuid, String? newName, int? newAppId, DateTime? newReleaseDate, int? newHype, bool? newPlaying, Image? newHeader ] ) : 
+  Game.withData( [ int? newGuid, String? newName, int? newAppId, DateTime? newReleaseDate, int? newHype, bool? newPlaying, int? newSale, Image? newHeader ] ) : 
     assert( newHype == null || ( 1 <= newHype && newHype <= 5 ) ),
     guid        = newGuid        ?? 0,
     name        = newName        ?? '',
@@ -28,6 +29,7 @@ class Game {
     releaseDate = newReleaseDate ?? DateTime.now(),
     hype        = newHype        ?? 1,
     playing     = newPlaying     ?? false,
+    sale        = newSale        ?? 0,
     header      = newHeader;
 
   Game.copy( Game otherGame ) :
@@ -37,6 +39,7 @@ class Game {
     hype        = otherGame.hype,
     appId       = otherGame.appId,
     playing     = otherGame.playing,
+    sale        = otherGame.sale,
     header      = otherGame.header;
 
   Future<void> loadHeader() async {
