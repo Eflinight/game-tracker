@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:game_tracker/core/app_id_list_provider.dart';
 import 'package:game_tracker/view/home.dart';
 import 'package:game_tracker/core/game_list_provider.dart';
 import 'package:game_tracker/utils/network.dart';
@@ -10,8 +11,11 @@ void main() async {
   initializeDateFormatting("en");
   await updateGameList();
   runApp(
-    ChangeNotifierProvider(
-      create: (context) => GameListData.fromJson(),
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (context) => GameListData.fromJson()),
+        ChangeNotifierProvider(create: (context) => AppIDListData.fromJson()),
+      ],
       child: const MyApp()
     )
   );
