@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:game_tracker/core/app_id_list_provider.dart';
 import 'package:game_tracker/core/game_data.dart';
 import 'package:game_tracker/core/game_list_provider.dart';
 import 'package:game_tracker/utils/localio.dart';
@@ -16,6 +18,7 @@ class _GameListState extends State<GameList> {
   final ScrollController _scrollController = ScrollController();
   int _focusedIndex = 0;
   String filter = "";
+  Timer? _debounce;
 
   @override
   void initState() {
@@ -49,7 +52,14 @@ class _GameListState extends State<GameList> {
 
   Widget createSearchBar() {
     return SearchBar(
-      onChanged: (String newFilter) => setState(() => filter = newFilter),
+      onChanged: (String newFilter) {
+        setState(() => filter = newFilter); 
+        _debounce?.cancel();
+        _debounce = Timer(
+          const Duration(milliseconds: 500), 
+          () => Provider.of<AppIDListData>(context, listen: false).startSearch(newFilter, 5)
+        );
+      },
       backgroundColor: MaterialStatePropertyAll<Color>(Colors.blueGrey.shade900),
       surfaceTintColor: const MaterialStatePropertyAll<Color>(Colors.transparent),
       overlayColor: const MaterialStatePropertyAll<Color>(Colors.transparent),
@@ -108,16 +118,23 @@ class _GameListState extends State<GameList> {
   }
   
   Widget createGameListView() {
-    return Consumer<GameListData>(
-      builder: (context, data, child) {
-        List<Game> filteredGames = List<Game>.from(data.games);
+    return Consumer2<GameListData, AppIDListData>(
+      builder: (context, glData, alData, child) {
+        List<Game> filteredGames = List<Game>.from(glData.games);
         filteredGames.retainWhere((game) => game.name.toLowerCase().contains(filter.toLowerCase()));
         return ListView.builder(
           controller: _scrollController,
-          itemCount: filteredGames.length,
+          itemCount: filteredGames.length + (alData.results.isNotEmpty ? 1 : 0) + alData.results.length,
           itemBuilder: (context, index) {
-            Game game = filteredGames[index];
-            return GameDesc(game: game);
+            if (index < filteredGames.length) {
+              return GameDesc(game: filteredGames[index]);
+            }
+            else if (index == filteredGames.length) {
+              return const Divider();
+            }
+            else {
+              return Text(alData.results[(index - filteredGames.length - 1)].name, style: const TextStyle(color: Colors.white),);
+            }
           }
         );
       }
