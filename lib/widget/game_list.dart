@@ -122,18 +122,34 @@ class _GameListState extends State<GameList> {
       builder: (context, glData, alData, child) {
         List<Game> filteredGames = List<Game>.from(glData.games);
         filteredGames.retainWhere((game) => game.name.toLowerCase().contains(filter.toLowerCase()));
+        List<SteamGameNameInfo> steamSearchResults = alData.results;
+        int extraIdxs = steamSearchResults.length;
+        if (alData.searching) {
+          extraIdxs = 1;
+        }
+
         return ListView.builder(
           controller: _scrollController,
-          itemCount: filteredGames.length + (alData.results.isNotEmpty ? 1 : 0) + alData.results.length,
+          itemCount: filteredGames.length + extraIdxs,
           itemBuilder: (context, index) {
             if (index < filteredGames.length) {
               return GameDesc(game: filteredGames[index]);
             }
-            else if (index == filteredGames.length) {
-              return const Divider();
+            else if (alData.searching) {
+                return Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: CircularProgressIndicator(
+                      color: Colors.blue[800]
+                    ),
+                  )
+                ]
+              );
             }
             else {
-              return Text(alData.results[(index - filteredGames.length - 1)].name, style: const TextStyle(color: Colors.white),);
+              return Text(alData.results[(index - filteredGames.length)].name, style: const TextStyle(color: Colors.white),);
             }
           }
         );
