@@ -32,11 +32,13 @@ class AppIDListData extends ChangeNotifier {
   final List<SteamGameNameInfo> _appids = [];
   List<SteamGameNameInfo> _results = []; 
   CancelableOperation<void>? _currentSearch;
-  bool _loaded = false;
   int _searchCounter = 0;
+  bool _loaded = false;
+  bool _searching = false;
  
   UnmodifiableListView<SteamGameNameInfo> get appids  => UnmodifiableListView(_appids);
   UnmodifiableListView<SteamGameNameInfo> get results  => UnmodifiableListView(_results);
+  bool get searching => _searching;
 
   AppIDListData.fromJson() {
     load();
@@ -64,9 +66,14 @@ class AppIDListData extends ChangeNotifier {
     _currentSearch?.cancel();
 
     if (_loaded) {
+      _searching = false;
       _results.clear();
-      _searchCounter++;
-      _currentSearch = CancelableOperation.fromFuture(_searchN(query, limit, _searchCounter));
+      if (query.isNotEmpty) {
+        _searching = true;
+        _searchCounter++;
+        _currentSearch = CancelableOperation.fromFuture(_searchN(query, limit, _searchCounter));
+      }
+      notifyListeners();
     }
   }
 
@@ -87,6 +94,7 @@ class AppIDListData extends ChangeNotifier {
       // Optional: handle or ignore specific known issues here
     } finally {
       if (_searchCounter == searchId) {
+        _searching = false;
         notifyListeners();
       }
     }
