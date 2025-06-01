@@ -8,7 +8,7 @@ import 'package:http/http.dart' as http;
 import 'package:html/parser.dart' show parse;
 
 Future<List<SteamGameNameInfo>> searchSteam(String query, int limit) async {
-  final encodedQuery = Uri.encodeComponent(query);
+  final encodedQuery = Uri.encodeComponent(query.replaceAll(" ", "+"));
   final url = 'https://store.steampowered.com/search/?term=$encodedQuery';
 
   final response = await http.get(Uri.parse(url));

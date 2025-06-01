@@ -148,8 +148,9 @@ class _GameListState extends State<GameList> {
                   ]);
             } else {
               return GameAdd(
-                potentialGameSteamData:
-                    alData.results[(index - 1 - filteredGames.length)],
+                potentialGameSteamData: alData.results[(index -
+                    (filteredGames.isNotEmpty ? 1 : 0) -
+                    filteredGames.length)],
               );
             }
           });
