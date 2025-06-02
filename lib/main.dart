@@ -10,7 +10,7 @@ void main() async {
   initializeDateFormatting("en");
   runApp(MultiProvider(providers: [
     ChangeNotifierProvider(create: (context) => GameListData.fromJson()),
-    ChangeNotifierProvider(create: (context) => AppIDListData.fromJson()),
+    ChangeNotifierProvider(create: (context) => AppIDListData()),
   ], child: const MyApp()));
 }
 
