@@ -12,15 +12,8 @@ class GameAdd extends StatelessWidget {
   final Game potentialGame;
 
   GameAdd({super.key, required this.potentialGameSteamData})
-      : potentialGame = Game.withData(
-          null,
-          potentialGameSteamData.name,
-          potentialGameSteamData.appid,
-          null,
-          5,
-          null,
-          null,
-        );
+      : potentialGame =
+            Game.withData(null, potentialGameSteamData.name, potentialGameSteamData.appid, null, 5, null, null);
 
   @override
   Widget build(BuildContext context) {

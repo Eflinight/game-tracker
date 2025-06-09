@@ -11,11 +11,11 @@ class GameHeaderPane extends StatelessWidget {
   const GameHeaderPane({super.key, required this.game, required this.transitionCallback});
 
   Widget buildHeaderMain(BuildContext context) {
-    String releaseDateDisp = game.releaseDate.toString();
+    String releaseDateDisp = game.releaseDate.toString().split(" ").first;
     if (game.releaseDate != null) {
       if (game.releaseDate!.year == 9999) {
         releaseDateDisp = "TBA";
-      } else {
+      } else if (game.releaseDate!.month == 12 && game.releaseDate!.day == 31) {
         releaseDateDisp = game.releaseDate!.year.toString();
       }
     }

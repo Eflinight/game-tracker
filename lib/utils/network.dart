@@ -73,15 +73,13 @@ Future<DateTime?> fetchReleaseDateFromSteamDB(int appid) async {
       final dynamic appData = jsonDecode(response.body)[appid.toString()];
 
       if (appData['success']) {
-        final String releaseDateStr = appData['data']['release_date']['date'];
-        if (appData['data']['release_date']['coming_soon']) {
-          try {
-            int year = int.parse(releaseDateStr.split(" ").last);
-            return DateTime(year, 12, 31);
-          } catch (e) {
+        for (dynamic genre in appData['data']['genres']) {
+          if (genre["description"] == "Early Access") {
             return DateTime(9999, 12, 31);
           }
         }
+
+        final String releaseDateStr = appData['data']['release_date']['date'];
         try {
           final DateFormat dateFormat = DateFormat("d MMM, yyyy", "en");
           return dateFormat.parse(releaseDateStr);
@@ -90,7 +88,12 @@ Future<DateTime?> fetchReleaseDateFromSteamDB(int appid) async {
             final DateFormat dateFormat = DateFormat("MMM d, yyyy", "en");
             return dateFormat.parse(releaseDateStr);
           } catch (e) {
-            return null;
+            try {
+              int year = int.parse(releaseDateStr.split(" ").last);
+              return DateTime(year, 12, 31);
+            } catch (e) {
+              return DateTime(9999, 12, 31);
+            }
           }
         }
       } else {
