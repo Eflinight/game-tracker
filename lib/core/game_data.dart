@@ -1,6 +1,5 @@
 import 'package:game_tracker/utils/localio.dart';
 import 'package:flutter/material.dart';
-import 'package:game_tracker/utils/network.dart';
 import 'dart:io';
 
 class Game {

@@ -11,6 +11,14 @@ class GameHeaderPane extends StatelessWidget {
   const GameHeaderPane({super.key, required this.game, required this.transitionCallback});
 
   Widget buildHeaderMain(BuildContext context) {
+    String releaseDateDisp = game.releaseDate.toString();
+    if (game.releaseDate != null) {
+      if (game.releaseDate!.year == 9999) {
+        releaseDateDisp = "TBA";
+      } else {
+        releaseDateDisp = game.releaseDate!.year.toString();
+      }
+    }
     return Container(
       color: Colors.black,
       child: Row(mainAxisAlignment: MainAxisAlignment.end, children: [
@@ -18,7 +26,7 @@ class GameHeaderPane extends StatelessWidget {
           padding: const EdgeInsets.only(top: 60.0, bottom: 60.0),
           child: Column(
             children: [
-              Text(game.releaseDate.toString().split(' ')[0],
+              Text(releaseDateDisp,
                   style: const TextStyle(
                     color: Colors.white70,
                   )),

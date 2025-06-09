@@ -51,8 +51,8 @@ Future<String?> downloadImageFromSteamDB(int appId) async {
 
   if (!file.existsSync()) {
     // Try to get the image from steam database, default header if not existent
-    Response response = await get(Uri.parse(
-        'https://cdn.cloudflare.steamstatic.com/steam/apps/$appId/library_hero.jpg'));
+    Response response =
+        await get(Uri.parse('https://cdn.cloudflare.steamstatic.com/steam/apps/$appId/library_hero.jpg'));
     if (response.statusCode == 200) {
       // Save the image
       file.writeAsBytesSync(response.bodyBytes);
@@ -64,8 +64,7 @@ Future<String?> downloadImageFromSteamDB(int appId) async {
 }
 
 Future<DateTime?> fetchReleaseDateFromSteamDB(int appid) async {
-  final String url =
-      'https://store.steampowered.com/api/appdetails?appids=$appid';
+  final String url = 'https://store.steampowered.com/api/appdetails?appids=$appid';
 
   try {
     final Response response = await get(Uri.parse(url));
@@ -75,6 +74,14 @@ Future<DateTime?> fetchReleaseDateFromSteamDB(int appid) async {
 
       if (appData['success']) {
         final String releaseDateStr = appData['data']['release_date']['date'];
+        if (appData['data']['release_date']['coming_soon']) {
+          try {
+            int year = int.parse(releaseDateStr.split(" ").last);
+            return DateTime(year, 12, 31);
+          } catch (e) {
+            return DateTime(9999, 12, 31);
+          }
+        }
         try {
           final DateFormat dateFormat = DateFormat("d MMM, yyyy", "en");
           return dateFormat.parse(releaseDateStr);
@@ -83,12 +90,7 @@ Future<DateTime?> fetchReleaseDateFromSteamDB(int appid) async {
             final DateFormat dateFormat = DateFormat("MMM d, yyyy", "en");
             return dateFormat.parse(releaseDateStr);
           } catch (e) {
-            try {
-              int year = int.parse(releaseDateStr);
-              return DateTime(year, 12, 31);
-            } catch (e) {
-              return null;
-            }
+            return null;
           }
         }
       } else {
@@ -103,8 +105,7 @@ Future<DateTime?> fetchReleaseDateFromSteamDB(int appid) async {
 }
 
 Future<int> fetchSaleFromSteamDB(int appid) async {
-  final String url =
-      'https://store.steampowered.com/api/appdetails?appids=$appid';
+  final String url = 'https://store.steampowered.com/api/appdetails?appids=$appid';
 
   try {
     final Response response = await get(Uri.parse(url));
@@ -113,8 +114,7 @@ Future<int> fetchSaleFromSteamDB(int appid) async {
       final dynamic appData = jsonDecode(response.body)[appid.toString()];
 
       if (appData['success']) {
-        final dynamic saleStringSubs =
-            appData['data']['package_groups'][0]['subs'];
+        final dynamic saleStringSubs = appData['data']['package_groups'][0]['subs'];
         for (dynamic sub in saleStringSubs) {
           if (!sub['is_free_license']) {
             final String saleString = sub['percent_savings_text'].trim();
