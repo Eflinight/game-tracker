@@ -7,70 +7,54 @@ import 'package:provider/provider.dart';
 class GameHeaderPane extends StatelessWidget {
   final Game game;
   final Function() transitionCallback; // Callback to be called when settings view is exited
-  
+
   const GameHeaderPane({super.key, required this.game, required this.transitionCallback});
-  
+
   Widget buildHeaderMain(BuildContext context) {
     return Container(
       color: Colors.black,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(top: 60.0, bottom: 60.0),
-            child: Column(
-              children: [
-                Text(
-                  game.releaseDate.toString().split(' ')[0],
+      child: Row(mainAxisAlignment: MainAxisAlignment.end, children: [
+        Padding(
+          padding: const EdgeInsets.only(top: 60.0, bottom: 60.0),
+          child: Column(
+            children: [
+              Text(game.releaseDate.toString().split(' ')[0],
                   style: const TextStyle(
                     color: Colors.white70,
-                  )
+                  )),
+              SizedBox(
+                width: MediaQuery.of(context).size.width * 0.1,
+                child: Text(
+                  game.name,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(fontSize: 20, color: Colors.white),
                 ),
+              ),
+              if (!game.playing && game.sale != 0)
                 SizedBox(
                   width: MediaQuery.of(context).size.width * 0.1,
                   child: Text(
-                    game.name,
+                    "${game.sale.toString()}%",
                     textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontSize: 20,
-                      color: Colors.white
-                    ),
+                    style: const TextStyle(fontSize: 24, color: Colors.red, fontWeight: FontWeight.bold),
                   ),
                 ),
-                if(!game.playing && game.sale != 0)
-                  SizedBox(
-                    width: MediaQuery.of(context).size.width * 0.1,
-                    child: Text(
-                      "${game.sale.toString()}%",
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        fontSize: 24,
-                        color: Colors.red,
-                        fontWeight: FontWeight.bold
-                      ),
-                    ),
-                  ),
-                Expanded(child: Container()),
-                if (game.playing)
-                  Icon(
-                    Icons.videogame_asset,
-                    size: 40.0,
-                    color: Colors.blue.shade600
-                  )
-                else
-                  Row(
+              Expanded(child: Container()),
+              if (game.playing)
+                Icon(Icons.videogame_asset, size: 40.0, color: Colors.blue.shade600)
+              else
+                Row(
                     children: List.generate(
-                      game.hype, 
-                      (index) => Icon(
-                        Icons.star,
-                        color: Colors.blue.shade600,
-                      ),
-                    )
-                  )
-              ],
-            ),
+                  game.hype,
+                  (index) => Icon(
+                    Icons.star,
+                    color: Colors.blue.shade600,
+                  ),
+                ))
+            ],
           ),
-          ShaderMask(
+        ),
+        ShaderMask(
             shaderCallback: (Rect bounds) {
               return const LinearGradient(
                 begin: Alignment.centerRight,
@@ -82,10 +66,8 @@ class GameHeaderPane extends StatelessWidget {
                 stops: [0.6, 1.0], // Adjust the stops for a smooth fade
               ).createShader(bounds);
             },
-            child: game.header
-          ),
-        ]
-      ),
+            child: game.header),
+      ]),
     );
   }
 
@@ -95,19 +77,18 @@ class GameHeaderPane extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
-          if (game.playing)
-            ...[
-              GameControlButton(
-                onPressed: () {
-                  game.playing = false;
-                  game.hype = 1;
-                  Provider.of<GameListData>(context, listen: false).update(game);
-                },
-                icon: const Icon(Icons.workspace_premium),
-                tooltip: "To 100%",
-              ),
-              SizedBox.fromSize(size: const Size(15.0, 0.0))
-            ],
+          if (game.playing) ...[
+            GameControlButton(
+              onPressed: () {
+                game.playing = false;
+                game.hype = 1;
+                Provider.of<GameListData>(context, listen: false).update(game);
+              },
+              icon: const Icon(Icons.workspace_premium),
+              tooltip: "To 100%",
+            ),
+            SizedBox.fromSize(size: const Size(15.0, 0.0))
+          ],
           GameControlButton(
             onPressed: () {
               game.playing = !game.playing;
@@ -119,7 +100,7 @@ class GameHeaderPane extends StatelessWidget {
         ],
       ),
     );
-  } 
+  }
 
   Widget buildGeneralHeaderButtons(BuildContext context) {
     return Padding(
@@ -145,18 +126,10 @@ class GameHeaderPane extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        buildHeaderMain(context),
-        Align(
-          alignment: Alignment.topRight,
-          child: buildGeneralHeaderButtons(context)
-        ),
-        Align(
-          alignment: Alignment.bottomRight,
-          child: buildSpecificHeaderButtons(context)
-        )
-      ]
-    );
+    return Stack(children: [
+      buildHeaderMain(context),
+      Align(alignment: Alignment.topRight, child: buildGeneralHeaderButtons(context)),
+      Align(alignment: Alignment.bottomRight, child: buildSpecificHeaderButtons(context))
+    ]);
   }
 }

@@ -83,7 +83,12 @@ Future<DateTime?> fetchReleaseDateFromSteamDB(int appid) async {
             final DateFormat dateFormat = DateFormat("MMM d, yyyy", "en");
             return dateFormat.parse(releaseDateStr);
           } catch (e) {
-            return null;
+            try {
+              int year = int.parse(releaseDateStr);
+              return DateTime(year, 12, 31);
+            } catch (e) {
+              return null;
+            }
           }
         }
       } else {
@@ -111,7 +116,6 @@ Future<int> fetchSaleFromSteamDB(int appid) async {
         final dynamic saleStringSubs =
             appData['data']['package_groups'][0]['subs'];
         for (dynamic sub in saleStringSubs) {
-          print(sub['is_free_license']);
           if (!sub['is_free_license']) {
             final String saleString = sub['percent_savings_text'].trim();
             return saleString.isEmpty ? 0 : int.parse(saleString.split('%')[0]);
