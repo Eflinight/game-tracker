@@ -44,6 +44,7 @@ class GameListData extends ChangeNotifier {
     _games.sort((Game g1, Game g2) {
       int g1Score = g1.hype * 25 - g1.sale;
       int g2Score = g2.hype * 25 - g2.sale;
+      if (g1.playing && g2.playing) return g1.name.compareTo(g2.name);
       if (g1.releaseDate == null && g2.releaseDate != null) return 1;
       if (g1.releaseDate != null && g2.releaseDate == null) return -1;
       if (g1.releaseDate != null && g2.releaseDate != null) {
