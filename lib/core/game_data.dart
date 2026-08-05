@@ -1,16 +1,15 @@
 import 'package:game_tracker/utils/localio.dart';
 import 'package:flutter/material.dart';
-import 'package:game_tracker/utils/network.dart';
 import 'dart:io';
 
 class Game {
   int guid = 0;
   String name = '';
   int appId = 0;
-  DateTime releaseDate = DateTime.now();
   int hype = 1;
   bool playing = false;
   int sale = 0;
+  DateTime? releaseDate;
   Image? header;
 
   Game()
@@ -51,8 +50,7 @@ class Game {
         header = otherGame.header;
 
   Future<void> loadHeader() async {
-    header = await getGameHeader(appId) ??
-        Image.file(File(await getDefaultHeaderPath()));
+    header = await getGameHeader(appId) ?? Image.file(File(await getDefaultHeaderPath()));
   }
 
   Future<void> refresh() async {
@@ -76,8 +74,5 @@ class Game {
 
     // Refresh the header
     await loadHeader();
-
-    // Refresh the release dat if an online one is available
-    releaseDate = await fetchReleaseDateFromSteamDB(appId) ?? releaseDate;
   }
 }

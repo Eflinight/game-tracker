@@ -44,12 +44,21 @@ class GameListData extends ChangeNotifier {
     _games.sort((Game g1, Game g2) {
       int g1Score = g1.hype * 25 - g1.sale;
       int g2Score = g2.hype * 25 - g2.sale;
-      if (g1.playing && !g2.playing) return -1;
-      if (!g1.playing && g2.playing) return 1;
-      if (g1Score > g2Score) return -1;
-      if (g1Score < g2Score) return 1;
-      if (g1.releaseDate.compareTo(g2.releaseDate) != 0)
-        return g1.releaseDate.compareTo(g2.releaseDate);
+      if (g1.releaseDate == null && g2.releaseDate != null) return 1;
+      if (g1.releaseDate != null && g2.releaseDate == null) return -1;
+      if (g1.releaseDate != null && g2.releaseDate != null) {
+        if (g1.releaseDate!.isBefore(DateTime.now()) && g2.releaseDate!.isAfter(DateTime.now()))
+          return -1;
+        if (g1.releaseDate!.isAfter(DateTime.now()) && g2.releaseDate!.isBefore(DateTime.now()))
+          return 1;
+        if (g1.playing && !g2.playing) return -1;
+        if (!g1.playing && g2.playing) return 1;
+        if (g1Score > g2Score) return -1;
+        if (g1Score < g2Score) return 1;
+        if (g1.releaseDate!.compareTo(g2.releaseDate!) != 0) {
+          return g1.releaseDate!.compareTo(g2.releaseDate!);
+        }
+      }
       return g1.name.compareTo(g2.name);
     });
     notifyListeners();
@@ -62,16 +71,14 @@ class GameListData extends ChangeNotifier {
     // Replace all game data, add new one if necessary
     for (Game game in _games) {
       // Get the idx in the list of the game to change
-      int changeIdx = gameListData['games']
-          .indexWhere((jsonGame) => jsonGame['guid'] == game.guid);
+      int changeIdx = gameListData['games'].indexWhere((jsonGame) => jsonGame['guid'] == game.guid);
 
       // Update the game if found
       if (changeIdx != -1) {
         gameListData['games'][changeIdx]['name'] = game.name;
         gameListData['games'][changeIdx]['hype'] = game.hype;
         gameListData['games'][changeIdx]['appid'] = game.appId;
-        gameListData['games'][changeIdx]['release'] =
-            game.releaseDate.toString();
+        gameListData['games'][changeIdx]['release'] = game.releaseDate.toString();
         gameListData['games'][changeIdx]['playing'] = game.playing;
       }
       // Add the new game if it's new
@@ -95,6 +102,17 @@ class GameListData extends ChangeNotifier {
     bool gameDataChanged = false;
     dynamic gameListData = await getGameListJson();
     int index = 0;
+    List<int> appidList = [];
+
+    // Get all steam appid
+    for (Map<String, dynamic> game in gameListData['games']) {
+      if (game['appid'] < (1 << 23)) {
+        appidList.add(game['appid']);
+      }
+    }
+
+    // Get sale values into a map
+    final Map<int, int> saleList = await multiFetchSaleFromSteam(appidList);
 
     for (Map<String, dynamic> game in gameListData['games']) {
       index++;
@@ -114,13 +132,16 @@ class GameListData extends ChangeNotifier {
       newGame.appId = game['appid'];
 
       // Game release data
-      if (game['release'] == null || game['release'] == '') {
-        DateTime tempNewRelaseDate =
-            await fetchReleaseDateFromSteamDB(newGame.appId) ?? DateTime.now();
-        game['release'] = tempNewRelaseDate.toString();
-        gameDataChanged = true;
+      DateTime? newReleaseDate = DateTime.tryParse(game['release']);
+      if (newReleaseDate == null || newReleaseDate.isAfter(DateTime.now())) {
+        DateTime? updatedReleaseDate = await fetchReleaseDateFromSteamDB(newGame.appId);
+        if (updatedReleaseDate != null && newReleaseDate != updatedReleaseDate) {
+          newReleaseDate = updatedReleaseDate;
+          game['release'] = newReleaseDate.toString();
+          gameDataChanged = true;
+        }
       }
-      newGame.releaseDate = DateTime.parse(game['release']);
+      newGame.releaseDate = newReleaseDate;
 
       // Game hype
       if (game['hype'] == null || game['hype'] == 0) {
@@ -136,11 +157,13 @@ class GameListData extends ChangeNotifier {
       }
       newGame.playing = game['playing'];
 
-      // Game sale
-      newGame.sale = await fetchSaleFromSteamDB(newGame.appId);
-
       // Game header
       newGame.loadHeader();
+
+      // Game sale
+      if (saleList.keys.contains(game["appid"])) {
+        newGame.sale = saleList[game["appid"]]!;
+      }
 
       gameDataChanged = true;
       game['imgPath'] = null;

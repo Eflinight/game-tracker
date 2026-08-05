@@ -12,15 +12,8 @@ class GameAdd extends StatelessWidget {
   final Game potentialGame;
 
   GameAdd({super.key, required this.potentialGameSteamData})
-      : potentialGame = Game.withData(
-          null,
-          potentialGameSteamData.name,
-          potentialGameSteamData.appid,
-          null,
-          5,
-          null,
-          null,
-        );
+      : potentialGame =
+            Game.withData(null, potentialGameSteamData.name, potentialGameSteamData.appid, null, 5, null, null);
 
   @override
   Widget build(BuildContext context) {
@@ -29,8 +22,7 @@ class GameAdd extends StatelessWidget {
           height: MediaQuery.of(context).size.height * 0.1,
           width: double.infinity,
           decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                  colors: [Colors.black, Color.fromARGB(255, 9, 46, 77)]),
+              gradient: const LinearGradient(colors: [Colors.black, Color.fromARGB(255, 9, 46, 77)]),
               border: Border.all(width: 0.2, color: Colors.white),
               borderRadius: const BorderRadius.all(Radius.circular(10.0))),
           child: Row(
@@ -39,10 +31,7 @@ class GameAdd extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.all(20.0),
                 child: Text(potentialGame.name,
-                    style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontStyle: FontStyle.italic)),
+                    style: const TextStyle(color: Colors.white, fontSize: 18, fontStyle: FontStyle.italic)),
               ),
               Expanded(child: Container()),
               StarRatingFormField(
@@ -62,10 +51,11 @@ class GameAdd extends StatelessWidget {
                 child: GameControlButton(
                   icon: const Icon(Icons.add),
                   onPressed: () async {
+                    final gameList = Provider.of<GameListData>(context, listen: false);
                     await downloadImageFromSteamDB(potentialGame.appId);
+                    potentialGame.releaseDate = await fetchReleaseDateFromSteamDB(potentialGame.appId);
                     await potentialGame.refresh();
-                    await Provider.of<GameListData>(context, listen: false)
-                        .add(potentialGame);
+                    await gameList.add(potentialGame);
                   },
                   tooltip: "Add Game",
                 ),
