@@ -46,6 +46,7 @@ dependencies:
   fuzzywuzzy: ^1.2.0
   async: ^2.11.0
   html: ^0.15.6
+  path: ^1.9.1
 
 dev_dependencies:
   flutter_test:

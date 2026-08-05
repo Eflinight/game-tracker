@@ -1,8 +1,43 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:game_tracker/core/game_data.dart';
+
+String _steamCacheFilename(int appid) {
+  final DateTime now = DateTime.now();
+  final String date =
+      '${now.year}_${now.month.toString().padLeft(2, '0')}_${now.day.toString().padLeft(2, '0')}';
+  return '${appid}_$date.json';
+}
+
+Future<void> cacheSteamData(int appid, dynamic data) async {
+  final String appDataDir = (await getApplicationSupportDirectory()).path;
+  final Directory cacheDir = Directory('$appDataDir\\steam_cache');
+  if (!cacheDir.existsSync()) {
+    cacheDir.createSync(recursive: true);
+  }
+
+  // Delete any stale cache files for this appid
+  cacheDir
+      .listSync()
+      .whereType<File>()
+      .where((f) => RegExp('^${appid}_').hasMatch(p.basename(f.path)))
+      .forEach((f) => f.deleteSync());
+
+  final File file = File('${cacheDir.path}\\${_steamCacheFilename(appid)}');
+  file.writeAsStringSync(jsonEncode(data));
+}
+
+Future<dynamic> getCachedSteamData(int appid) async {
+  final String appDataDir = (await getApplicationSupportDirectory()).path;
+  final File file = File('$appDataDir\\steam_cache\\${_steamCacheFilename(appid)}');
+  if (file.existsSync()) {
+    return jsonDecode(file.readAsStringSync());
+  }
+  return null;
+}
 
 Future<dynamic> getGameListJson() async {
   final String appDataDir = (await getApplicationSupportDirectory()).path;
@@ -11,8 +46,7 @@ Future<dynamic> getGameListJson() async {
 }
 
 void saveNewGameListJson(dynamic gameList) async {
-  File file =
-      File('${(await getApplicationSupportDirectory()).path}\\game_list.json');
+  File file = File('${(await getApplicationSupportDirectory()).path}\\game_list.json');
   file.writeAsStringSync(jsonEncode(gameList));
 }
 
@@ -63,8 +97,7 @@ void saveGameData(Game game) async {
   dynamic gameList = await getGameListJson();
 
   // Get the idx in the list of the game to change
-  int changeIdx =
-      gameList['games'].indexWhere((jsonGame) => jsonGame['guid'] == game.guid);
+  int changeIdx = gameList['games'].indexWhere((jsonGame) => jsonGame['guid'] == game.guid);
 
   // Update the game
   gameList['games'][changeIdx]['name'] = game.name;
