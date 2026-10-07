@@ -74,6 +74,9 @@ Future<dynamic> fetchDataFromSteam(int appid) async {
       if (response.statusCode == 200) {
         final dynamic appData = jsonDecode(response.body)[appid.toString()];
         if (appData['success']) {
+          if (appid == 2825880) {
+            print("appData: $appData");
+          }
           await cacheSteamData(appid, appData);
           return appData;
         } else {
@@ -90,33 +93,76 @@ Future<dynamic> fetchDataFromSteam(int appid) async {
   }
 }
 
-Future<Map<int, int>> multiFetchSaleFromSteam(List<int> appidList) async {
-  Map<int, int> saleList = {};
+/// Returns {appid: -discountPercent} (0 when no sale / unavailable).
+Future<Map<int, int>> multiFetchSaleFromSteam(
+  List<int> appidList, {
+  int batchSize = 100,
+  int maxRetries = 3,
+  Duration delayBetweenBatches = const Duration(seconds: 1),
+}) async {
+  final Map<int, int> saleList = {};
 
-  final String url =
-      'https://store.steampowered.com/api/appdetails?appids=${appidList.join(",")}&filters=price_overview';
-  try {
-    final Response response = await get(Uri.parse(url));
-    if (response.statusCode == 200) {
-      for (int appid in appidList) {
-        final dynamic appData = jsonDecode(response.body)[appid.toString()];
-        if (appData['success']) {
-          if (appData['data'] is List) {
-            saleList[appid] = 0;
-            continue;
-          }
+  for (int i = 0; i < appidList.length; i += batchSize) {
+    final batch = appidList.sublist(
+      i,
+      i + batchSize > appidList.length ? appidList.length : i + batchSize,
+    );
 
-          saleList[appid] = -appData['data']['price_overview']['discount_percent'];
-        } else {
-          saleList[appid] = 0;
-        }
-      }
+    final Map<String, dynamic>? json = await _fetchBatch(batch, maxRetries);
+
+    for (final appid in batch) {
+      saleList[appid] = _parseDiscount(json?[appid.toString()]);
     }
-  } catch (e) {
-    print(e);
+
+    if (i + batchSize < appidList.length) {
+      await Future.delayed(delayBetweenBatches);
+    }
   }
 
   return saleList;
+}
+
+Future<Map<String, dynamic>?> _fetchBatch(
+  List<int> batch,
+  int maxRetries,
+) async {
+  final url = Uri.parse(
+    'https://store.steampowered.com/api/appdetails'
+    '?appids=${batch.join(",")}&filters=price_overview',
+  );
+
+  for (int attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      final Response response = await get(url);
+
+      if (response.statusCode == 200) {
+        final decoded = jsonDecode(response.body);
+        // Throttled requests can return 200 with a literal `null` body.
+        if (decoded is Map<String, dynamic>) return decoded;
+      } else if (response.statusCode != 429 && response.statusCode != 400) {
+        break; // not worth retrying
+      }
+    } catch (e) {
+      print('Batch fetch error: $e');
+    }
+
+    // Exponential backoff: 2s, 4s, 8s...
+    await Future.delayed(Duration(seconds: 2 << attempt));
+  }
+
+  print('Batch failed after $maxRetries attempts (${batch.length} appids)');
+  return null;
+}
+
+int _parseDiscount(dynamic appData) {
+  if (appData is! Map || appData['success'] != true) return 0;
+
+  final data = appData['data'];
+  // Free / unpriced apps return an empty list instead of a map.
+  if (data is! Map) return 0;
+
+  final discount = data['price_overview']?['discount_percent'];
+  return discount is int ? -discount : 0;
 }
 
 Future<DateTime?> fetchReleaseDateFromSteamDB(int appid) async {
@@ -159,7 +205,9 @@ Future<int> fetchSaleFromSteamDB(int appid) async {
   }
 
   final List<dynamic> packageGroups = appData['data']['package_groups'];
-
+  if (appid == 2825880) {
+    print("packageGroups: $packageGroups");
+  }
   if (packageGroups.isEmpty) {
     return 0;
   }
@@ -168,6 +216,9 @@ Future<int> fetchSaleFromSteamDB(int appid) async {
   for (dynamic sub in saleStringSubs) {
     if (!sub['is_free_license']) {
       final String saleString = sub['percent_savings_text'].trim();
+      if (appid == 2825880) {
+        print(saleString);
+      }
       return saleString.isEmpty ? 0 : int.parse(saleString.split('%')[0]);
     }
   }

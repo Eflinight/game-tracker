@@ -44,9 +44,18 @@ class GameHeaderPane extends StatelessWidget {
                   child: Text(
                     "${game.sale.toString()}%",
                     textAlign: TextAlign.center,
-                    style: const TextStyle(fontSize: 24, color: Colors.red, fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                        fontSize: 24, color: Colors.red, fontWeight: FontWeight.bold),
                   ),
                 ),
+              SizedBox(
+                width: MediaQuery.of(context).size.width * 0.1,
+                child: Text(
+                  game.appId.toString(),
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(fontSize: 15, color: Colors.white),
+                ),
+              ),
               Expanded(child: Container()),
               if (game.playing)
                 Icon(Icons.videogame_asset, size: 40.0, color: Colors.blue.shade600)
