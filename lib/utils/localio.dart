@@ -5,6 +5,42 @@ import 'package:path_provider/path_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:game_tracker/core/game_data.dart';
 
+/// Steam Web API credentials needed to read the achievement progress of the user.
+class SteamCredentials {
+  final String apiKey;
+  final String steamId;
+
+  const SteamCredentials(this.apiKey, this.steamId);
+
+  bool get isValid => apiKey.isNotEmpty && steamId.isNotEmpty;
+}
+
+Future<File> _steamConfigFile() async {
+  final String appDataDir = (await getApplicationSupportDirectory()).path;
+  return File('$appDataDir\\steam_config.json');
+}
+
+Future<SteamCredentials> getSteamCredentials() async {
+  final File file = await _steamConfigFile();
+  if (!file.existsSync()) {
+    return const SteamCredentials('', '');
+  }
+  try {
+    final dynamic config = jsonDecode(file.readAsStringSync());
+    return SteamCredentials(config['apikey'] ?? '', config['steamid'] ?? '');
+  } catch (_) {
+    return const SteamCredentials('', '');
+  }
+}
+
+Future<void> saveSteamCredentials(SteamCredentials credentials) async {
+  final File file = await _steamConfigFile();
+  file.writeAsStringSync(jsonEncode({
+    'apikey': credentials.apiKey,
+    'steamid': credentials.steamId,
+  }));
+}
+
 String _steamCacheFilename(int appid) {
   final DateTime now = DateTime.now();
   final String date =
@@ -37,6 +73,44 @@ Future<dynamic> getCachedSteamData(int appid) async {
     return jsonDecode(file.readAsStringSync());
   }
   return null;
+}
+
+Future<void> cacheAchievementData(int appid, dynamic data) async {
+  final String appDataDir = (await getApplicationSupportDirectory()).path;
+  final Directory cacheDir = Directory('$appDataDir\\achievement_cache');
+  if (!cacheDir.existsSync()) {
+    cacheDir.createSync(recursive: true);
+  }
+
+  final File file = File('${cacheDir.path}\\$appid.json');
+  file.writeAsStringSync(jsonEncode({
+    'timestamp': DateTime.now().toIso8601String(),
+    'data': data,
+  }));
+}
+
+/// Returns the cached achievement payload, or null when missing/stale.
+///
+/// The TTL mainly guards the burst of calls at startup; the periodic poll
+/// bypasses the cache entirely via `forceRefresh`.
+Future<dynamic> getCachedAchievementData(int appid,
+    {Duration maxAge = const Duration(minutes: 1)}) async {
+  final String appDataDir = (await getApplicationSupportDirectory()).path;
+  final File file = File('$appDataDir\\achievement_cache\\$appid.json');
+  if (!file.existsSync()) {
+    return null;
+  }
+
+  try {
+    final dynamic cached = jsonDecode(file.readAsStringSync());
+    final DateTime? timestamp = DateTime.tryParse(cached['timestamp'] ?? '');
+    if (timestamp == null || DateTime.now().difference(timestamp) > maxAge) {
+      return null;
+    }
+    return cached['data'];
+  } catch (_) {
+    return null;
+  }
 }
 
 Future<dynamic> getGameListJson() async {

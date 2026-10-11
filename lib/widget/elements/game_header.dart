@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:game_tracker/core/game_data.dart';
 import 'package:game_tracker/core/game_list_provider.dart';
+import 'package:game_tracker/widget/atoms/achievement_progress_bar.dart';
 import 'package:game_tracker/widget/atoms/game_control_buttons.dart';
 import 'package:provider/provider.dart';
 
@@ -48,14 +49,6 @@ class GameHeaderPane extends StatelessWidget {
                         fontSize: 24, color: Colors.red, fontWeight: FontWeight.bold),
                   ),
                 ),
-              SizedBox(
-                width: MediaQuery.of(context).size.width * 0.1,
-                child: Text(
-                  game.appId.toString(),
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(fontSize: 15, color: Colors.white),
-                ),
-              ),
               Expanded(child: Container()),
               if (game.playing)
                 Icon(Icons.videogame_asset, size: 40.0, color: Colors.blue.shade600)
@@ -94,18 +87,6 @@ class GameHeaderPane extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
-          if (game.playing) ...[
-            GameControlButton(
-              onPressed: () {
-                game.playing = false;
-                game.hype = 1;
-                Provider.of<GameListData>(context, listen: false).update(game);
-              },
-              icon: const Icon(Icons.workspace_premium),
-              tooltip: "To 100%",
-            ),
-            SizedBox.fromSize(size: const Size(15.0, 0.0))
-          ],
           GameControlButton(
             onPressed: () {
               game.playing = !game.playing;
@@ -116,6 +97,17 @@ class GameHeaderPane extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+
+  /// Achievement bar stretched across the bottom of the pane, between the
+  /// left text column and the bottom-right control buttons.
+  Widget buildAchievementProgress(BuildContext context) {
+    return Positioned(
+      left: MediaQuery.of(context).size.width * 0.20,
+      right: MediaQuery.of(context).size.width * 0.15,
+      bottom: 20.0,
+      child: AchievementProgressBar(progress: game.achievements!),
     );
   }
 
@@ -145,6 +137,7 @@ class GameHeaderPane extends StatelessWidget {
   Widget build(BuildContext context) {
     return Stack(children: [
       buildHeaderMain(context),
+      if (game.playing && game.achievements != null) buildAchievementProgress(context),
       Align(alignment: Alignment.topRight, child: buildGeneralHeaderButtons(context)),
       Align(alignment: Alignment.bottomRight, child: buildSpecificHeaderButtons(context))
     ]);

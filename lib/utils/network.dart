@@ -197,6 +197,80 @@ Future<DateTime?> fetchReleaseDateFromSteamDB(int appid) async {
   }
 }
 
+/// Achievement completion of the current user for a given game.
+class AchievementProgress {
+  final int unlocked;
+  final int total;
+
+  const AchievementProgress(this.unlocked, this.total);
+
+  bool get hasAchievements => total > 0;
+  double get ratio => total > 0 ? unlocked / total : 0.0;
+  int get percent => (ratio * 100).round();
+
+  @override
+  bool operator ==(Object other) =>
+      other is AchievementProgress && other.unlocked == unlocked && other.total == total;
+
+  @override
+  int get hashCode => Object.hash(unlocked, total);
+}
+
+/// Fetches the achievement progress of the configured Steam user for [appid].
+///
+/// Set [forceRefresh] to bypass the local cache, as the periodic poll does:
+/// otherwise a poll running on the same interval as the cache TTL would keep
+/// serving values that are up to one full interval stale.
+///
+/// Returns null when the credentials are missing, the profile is private or
+/// the game simply has no achievements.
+Future<AchievementProgress?> fetchAchievementProgressFromSteam(
+  int appid, {
+  bool forceRefresh = false,
+}) async {
+  // Custom (non Steam) games can never have achievements.
+  if (appid == 0 || appid >= (1 << 23)) {
+    return null;
+  }
+
+  dynamic payload = forceRefresh ? null : await getCachedAchievementData(appid);
+
+  if (payload == null) {
+    final SteamCredentials credentials = await getSteamCredentials();
+    if (!credentials.isValid) {
+      return null;
+    }
+
+    final Uri url = Uri.parse(
+      'https://api.steampowered.com/ISteamUserStats/GetPlayerAchievements/v1/'
+      '?appid=$appid&key=${credentials.apiKey}&steamid=${credentials.steamId}',
+    );
+
+    try {
+      final Response response = await get(url);
+      if (response.statusCode != 200) {
+        return null;
+      }
+      payload = jsonDecode(response.body)['playerstats'];
+      if (payload == null || payload['success'] != true) {
+        return null;
+      }
+      await cacheAchievementData(appid, payload);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  final dynamic achievements = payload['achievements'];
+  if (achievements is! List || achievements.isEmpty) {
+    return null;
+  }
+
+  final int unlocked = achievements.where((achievement) => achievement['achieved'] == 1).length;
+
+  return AchievementProgress(unlocked, achievements.length);
+}
+
 Future<int> fetchSaleFromSteamDB(int appid) async {
   final dynamic appData = await fetchDataFromSteam(appid);
 

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:collection';
 import 'package:flutter/material.dart';
 import 'package:game_tracker/core/game_data.dart';
@@ -5,14 +6,27 @@ import 'package:game_tracker/utils/localio.dart';
 import 'package:game_tracker/utils/network.dart';
 
 class GameListData extends ChangeNotifier {
+  /// How often the achievement progress of playing games is polled.
+  static const Duration achievementPollInterval = Duration(minutes: 1);
+
   final List<Game> _games = []; // Game list
   double _loadingPercent = 0.0; // Loading percentage
+  Timer? _achievementTimer;
+  bool _achievementPollRunning = false;
+  bool _achievementPollPaused = false;
 
   UnmodifiableListView<Game> get games => UnmodifiableListView(_games);
   double get loading => _loadingPercent;
 
   GameListData.fromJson() {
     load();
+    _startAchievementPolling();
+  }
+
+  @override
+  void dispose() {
+    _achievementTimer?.cancel();
+    super.dispose();
   }
 
   Future<void> add(Game game) async {
@@ -38,6 +52,54 @@ class GameListData extends ChangeNotifier {
     _games[_games.indexWhere((g) => g.guid == game.guid)] = game;
     saveGameData(game);
     notifyListeners();
+  }
+
+  void _startAchievementPolling() {
+    _achievementTimer?.cancel();
+    _achievementTimer = Timer.periodic(
+      achievementPollInterval,
+      (_) => refreshAchievements(forceRefresh: true),
+    );
+  }
+
+  /// Suspends/resumes the periodic poll, so a window left open in the
+  /// background doesn't keep hitting the Steam API all day.
+  void setAchievementPollingPaused(bool paused) {
+    if (_achievementPollPaused == paused) return;
+    _achievementPollPaused = paused;
+
+    if (paused) {
+      _achievementTimer?.cancel();
+      _achievementTimer = null;
+    } else {
+      // Catch up immediately on the time spent paused, then resume the cycle.
+      refreshAchievements(forceRefresh: true);
+      _startAchievementPolling();
+    }
+  }
+
+  /// Reloads the achievement progress of every game currently being played.
+  ///
+  /// Notifies listeners once, and only when something actually changed, to
+  /// avoid rebuilding the list every minute for nothing.
+  Future<void> refreshAchievements({bool forceRefresh = false}) async {
+    // A slow or retrying pass must not stack up with the next tick.
+    if (_achievementPollRunning) return;
+    _achievementPollRunning = true;
+
+    try {
+      bool changed = false;
+      for (Game game in _games.where((game) => game.playing)) {
+        if (await game.loadAchievements(forceRefresh: forceRefresh)) {
+          changed = true;
+        }
+      }
+      if (changed) {
+        notifyListeners();
+      }
+    } finally {
+      _achievementPollRunning = false;
+    }
   }
 
   void sort() {
@@ -160,6 +222,9 @@ class GameListData extends ChangeNotifier {
 
       // Game header
       newGame.loadHeader();
+
+      // Game achievement progress
+      newGame.loadAchievements();
 
       // Game sale
       if (saleList.keys.contains(game["appid"])) {

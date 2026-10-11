@@ -1,4 +1,5 @@
 import 'package:game_tracker/utils/localio.dart';
+import 'package:game_tracker/utils/network.dart';
 import 'package:flutter/material.dart';
 import 'dart:io';
 
@@ -11,6 +12,7 @@ class Game {
   int sale = 0;
   DateTime? releaseDate;
   Image? header;
+  AchievementProgress? achievements;
 
   Game()
       : guid = 0,
@@ -47,7 +49,25 @@ class Game {
         appId = otherGame.appId,
         playing = otherGame.playing,
         sale = otherGame.sale,
-        header = otherGame.header;
+        header = otherGame.header,
+        achievements = otherGame.achievements;
+
+  /// Refreshes the achievement completion of the user for this game.
+  /// Only relevant while the game is being played.
+  ///
+  /// Returns true when the progress actually changed, so callers can avoid
+  /// rebuilding the whole list on every poll.
+  Future<bool> loadAchievements({bool forceRefresh = false}) async {
+    final AchievementProgress? previous = achievements;
+
+    if (!playing) {
+      achievements = null;
+      return previous != null;
+    }
+
+    achievements = await fetchAchievementProgressFromSteam(appId, forceRefresh: forceRefresh);
+    return achievements != previous;
+  }
 
   Future<void> loadHeader() async {
     header = await getGameHeader(appId) ?? Image.file(File(await getDefaultHeaderPath()));
@@ -74,5 +94,8 @@ class Game {
 
     // Refresh the header
     await loadHeader();
+
+    // Refresh the achievement progress
+    await loadAchievements();
   }
 }
