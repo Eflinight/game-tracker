@@ -98,4 +98,6 @@ class Game {
     // Refresh the achievement progress
     await loadAchievements();
   }
+
+  int getCompletionLevel() => '/'.allMatches(name.split(' ').first).length;
 }

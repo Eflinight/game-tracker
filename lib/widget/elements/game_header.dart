@@ -107,7 +107,10 @@ class GameHeaderPane extends StatelessWidget {
       left: MediaQuery.of(context).size.width * 0.20,
       right: MediaQuery.of(context).size.width * 0.15,
       bottom: 20.0,
-      child: AchievementProgressBar(progress: game.achievements!),
+      child: AchievementProgressBar(
+        progress: game.achievements!,
+        completionLevel: game.getCompletionLevel(),
+      ),
     );
   }
 

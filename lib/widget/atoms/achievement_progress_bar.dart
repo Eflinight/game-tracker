@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:game_tracker/utils/network.dart';
 
@@ -8,8 +10,9 @@ import 'package:game_tracker/utils/network.dart';
 /// `right`, or a `SizedBox`).
 class AchievementProgressBar extends StatelessWidget {
   final AchievementProgress progress;
+  final int completionLevel;
 
-  const AchievementProgressBar({super.key, required this.progress});
+  const AchievementProgressBar({super.key, required this.progress, required this.completionLevel});
 
   /// Dark halo around glyphs, so light areas of the header art can't wash out
   /// the text or the icon.
@@ -50,7 +53,7 @@ class AchievementProgressBar extends StatelessWidget {
                     ),
                     const SizedBox(width: 8.0),
                     Text(
-                      "${progress.unlocked}/${progress.total}",
+                      "${progress.unlocked}/${progress.total} (${log(pow((progress.total - progress.unlocked).clamp(1, 999), completionLevel / 2)).floor().clamp(1, 999)})",
                       style: const TextStyle(
                         fontSize: 16,
                         color: Colors.white,
